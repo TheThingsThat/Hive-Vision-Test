@@ -128,6 +128,11 @@ public class HiveLimelight {
         return limelight;
     }
 
+    /** {@code System.nanoTime()}-based capture time of the most recent processed frame, or 0 before the first. */
+    public long latestCaptureNanos() {
+        return latestCaptureNanos;
+    }
+
     public boolean snapshot(String name) {
         return limelight.captureSnapshot(name);
     }
