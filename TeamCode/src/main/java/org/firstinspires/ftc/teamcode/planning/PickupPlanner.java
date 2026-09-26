@@ -4,6 +4,7 @@ import com.pedropathing.api.Paths;
 import com.pedropathing.math.Pose;
 import com.pedropathing.math.Vector2D;
 import com.pedropathing.paths.Path;
+import com.pedropathing.paths.interpolator.Interpolator;
 import com.pedropathing.utils.Angle;
 
 import org.firstinspires.ftc.teamcode.planning.PathTimeModel.Piece;
@@ -35,7 +36,9 @@ import java.util.List;
  * <p>
  * Leaving a pickup, the robot either keeps following the path tangent (fast, smooth) or, when that would
  * run it into a wall or a sharp reversal, departs in a free direction while its heading rotates linearly
- * to the next approach heading (the drivetrain is holonomic, so motion and heading can differ).
+ * to the next approach heading (the drivetrain is holonomic, so motion and heading can differ). Such a
+ * segment, and the very first one, holds its heading until the footprint is clear of the walls before it
+ * starts rotating, so a robot starting flush in a corner does not scrape its way out.
  */
 public class PickupPlanner {
 
@@ -187,6 +190,10 @@ public class PickupPlanner {
                 b.headingStart = headingStart;
                 b.headingEnd = headingEnd;
                 b.turnRad = turn;
+                // Hold the heading until the footprint is clear of the walls, then rotate. If the piece never
+                // gets clear, rotate over the whole piece and let the wall check judge it.
+                double hold = PathTimeModel.clearanceFraction(b);
+                b.holdFraction = hold < 1.0 ? hold : 0;
                 turnAssigned = true;
             }
             out.add(b);
@@ -443,7 +450,13 @@ public class PickupPlanner {
                     ? Paths.line(p.p0.toPose(), p.p3.toPose())
                     : Paths.curve(p.p0.toPose(), p.p1.toPose(), p.p2.toPose(), p.p3.toPose());
             if (!p.tangentHeading) {
-                part = part.linear(p.headingStart, p.headingEnd);
+                if (p.holdFraction > 1e-6 && p.holdFraction < 1.0 - 1e-6) {
+                    part = part.heading(Interpolator.piecewise()
+                            .until(p.holdFraction, Interpolator.constant(p.headingStart))
+                            .until(1.0, Interpolator.linear(p.headingStart, p.headingEnd)));
+                } else {
+                    part = part.linear(p.headingStart, p.headingEnd);
+                }
             } else {
                 part = PlannerConstants.INTAKE_AT_REAR ? part.reverseTangent() : part.tangent();
             }

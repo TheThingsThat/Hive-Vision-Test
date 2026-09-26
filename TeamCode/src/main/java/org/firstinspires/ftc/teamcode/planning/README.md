@@ -60,7 +60,9 @@ next. The planner searches both together.
 that would run the footprint into a wall (a ball picked up facing a wall) or means a sharp reversal, the
 planner also tries departing along the chord to the next ball, 45 deg either side of it, and straight
 backwards, with the heading rotating linearly to the next approach heading. The mecanum drivetrain is
-holonomic, so Pedro follows such a segment with motion and heading decoupled. Direction reversals inside a
+holonomic, so Pedro follows such a segment with motion and heading decoupled. On these segments, and on the
+first one, the heading is held until the footprint is half a robot diagonal from every wall and only then
+rotates, so a robot starting flush against a wall drives clear before it turns. Direction reversals inside a
 curve (cusps) are detected and charged a full stop-and-restart.
 
 With 12 candidate balls and 12 heading bins planning takes about 100 ms on a laptop; expect up to a second
@@ -69,15 +71,15 @@ crowded (nearest balls are kept).
 
 ## Running it
 
-- **Limelight: Collect Four Test** (TeleOp): push the robot into the origin corner and press Start to set
-  the pose, drive around so the map fills, press A to plan (the plan is printed in telemetry with order,
+- **Limelight: Collect Four Test** (TeleOp): put the robot's back against the middle of the red wall and
+  press Start to set the pose, drive around so the map fills, press A to plan (the plan is printed in telemetry with order,
   positions, approach angles and estimated time), Y to follow, B to cancel. D-pad toggles which colors are
   allowed.
-- **Collect Four (Limelight + Pedro)** (Autonomous): the robot starts pushed into a field corner
-  (`START_CORNER`, `START_HEADING_DEG`; `StartPoses` computes the exact center from the robot size), so
-  odometry is seeded exactly and no AprilTags are needed. Balls visible during init are mapped, the robot
-  drives `SCAN_CLEARANCE_IN` out of the corner, spins for `SCAN_SECONDS`, plans once, and drives the path.
-  Set `ALLOWED` to restrict colors.
+- **Collect Four (Limelight + Pedro)** (Autonomous): the robot starts with its back flush against a wall,
+  facing straight out (`START_WALL`, `START_ALONG_IN`; `StartPoses` computes the exact center from the
+  robot length), so odometry is seeded exactly and no AprilTags are needed. Balls visible during init are
+  mapped; after start it watches `LOOK_SECONDS` more, plans once from what it saw, and drives the path. It
+  does not move to look around. Set `ALLOWED` to restrict colors.
 
 Both OpModes use `Constants.create` (odometry only). AprilTag fusion (`Constants.createWithVision`) remains
 available for longer runs where drift matters; see the vision README.

@@ -32,6 +32,11 @@ final class PathTimeModel {
         /** Robot heading at the start / end of a non-tangent piece. */
         double headingStart = 0;
         double headingEnd = 0;
+        /**
+         * For a non-tangent piece: fraction of the arc length over which the heading is held at
+         * {@code headingStart} before rotating, so the robot clears nearby walls before it turns.
+         */
+        double holdFraction = 0;
         /** Heading change that must be completed during this piece when {@code !tangentHeading}. */
         double turnRad = 0;
 
@@ -132,9 +137,32 @@ final class PathTimeModel {
             t += p.ds[i] / v;
         }
         if (!p.tangentHeading) {
-            t = Math.max(t, p.turnRad / PlannerConstants.TURN_IN_PLACE_RATE_RAD_S);
+            t = Math.max(t, turnTime(p));
         }
         return t + p.cusps * cuspPenalty();
+    }
+
+    /** Time the heading rotation of a non-tangent piece needs, given that it only happens after the hold. */
+    static double turnTime(Piece p) {
+        double share = Math.max(0.05, 1.0 - p.holdFraction);
+        return p.turnRad / PlannerConstants.TURN_IN_PLACE_RATE_RAD_S / share;
+    }
+
+    /**
+     * Arc-length fraction at which the piece is far enough from every wall that the footprint can rotate
+     * freely (half the robot diagonal). 0 if clear from the start, 1 if never clear.
+     */
+    static double clearanceFraction(Piece p) {
+        double halfDiag = Math.hypot(PlannerConstants.ROBOT_LENGTH_IN, PlannerConstants.ROBOT_WIDTH_IN) / 2.0;
+        double field = PlannerConstants.FIELD_SIZE_IN;
+        if (p.length < 1e-9) return 0;
+        double cum = 0;
+        for (int i = 0; i <= p.n; i++) {
+            if (i > 0) cum += p.ds[i - 1];
+            double d = Math.min(Math.min(p.x[i], field - p.x[i]), Math.min(p.y[i], field - p.y[i]));
+            if (d >= halfDiag) return Math.min(1.0, cum / p.length);
+        }
+        return 1.0;
     }
 
     /** Time lost by braking to a stop and accelerating again, seconds. */
@@ -147,6 +175,9 @@ final class PathTimeModel {
     static double headingAt(Piece p, int i, double cumLength) {
         if (p.tangentHeading) return p.theta[i];
         double frac = p.length > 1e-9 ? cumLength / p.length : 1.0;
+        if (p.holdFraction < 1.0) {
+            frac = frac <= p.holdFraction ? 0 : (frac - p.holdFraction) / (1.0 - p.holdFraction);
+        }
         double delta = Math.atan2(Math.sin(p.headingEnd - p.headingStart), Math.cos(p.headingEnd - p.headingStart));
         return p.headingStart + delta * frac;
     }
@@ -229,7 +260,7 @@ final class PathTimeModel {
                 idx++;
             }
             if (!p.tangentHeading) {
-                pieceTime = Math.max(pieceTime, p.turnRad / PlannerConstants.TURN_IN_PLACE_RATE_RAD_S);
+                pieceTime = Math.max(pieceTime, turnTime(p));
             }
             total += pieceTime;
         }

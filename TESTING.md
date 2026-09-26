@@ -98,14 +98,14 @@ AprilTags in view.
    last tag estimate. Pass when the fused pose lands within 2 in of a taped position after a lap.
 
 **Test 6: Limelight: Collect Four Test.** This is the full stack. Localization is odometry only, seeded
-from the corner, so the start position must be exact.
+from the start pose, so the start position must be exact.
 
 1. Place five or six balls in the open, at least 18 in from any wall and 12 in apart. Tape-measure each
    one's Pedro (x, y) and write them down.
-2. Push the robot squarely into the origin corner (red side, right when you stand at the red wall) with
-   its back against the red wall and its right side against the side wall, facing the blue wall. Init, then
-   press Start on the gamepad to set the pose to that corner. Telemetry should read (8.5, 8.5, 0) for a
-   17 in robot. Then drive it out of the corner before turning: a rotating square hits both walls.
+2. Put the robot in the middle of the red alliance wall with its back flush against the wall, facing
+   the blue wall. Center it: 72 in from either side wall to the robot's centerline. Init, then press Start
+   on the gamepad to set the pose. Telemetry should read (8.5, 72, 0) for a 17 in robot. Drive straight
+   forward a few inches before turning so the back corners clear the wall.
 3. Drive slowly so every ball is seen for a second or more. Watch the ball map in telemetry: each ball
    needs two sightings. Positions should match your tape within 3 in. A ball listed twice means
    `MERGE_DISTANCE_IN` is too small; positions all shifted the same way means a camera constant is off.
@@ -126,18 +126,21 @@ from the corner, so the start position must be exact.
 
 **Test 7: Collect Four (Autonomous).**
 
-1. In `CollectFourAuto` set `START_CORNER` and `START_HEADING_DEG` to where the robot really starts, and
-   `ALLOWED` to the colors this autonomous may collect. `SCAN_CLEARANCE_IN` is how far it drives out of
-   the corner before spinning (default 14 in, diagonally toward the field center); `SCAN_SECONDS` is how
-   long it spins (2.5 s at 0.25 power).
-2. Place the balls. Push the robot squarely into the corner. Press Init: telemetry shows the computed
-   start pose and the ball map filling while it waits.
-3. Press Play. It leaves the corner, spins, plans once, drives, and stops after the last pickup with the
-   count in telemetry.
+1. In `CollectFourAuto` set `START_WALL` (red by default) and `START_ALONG_IN` (72 = middle of the wall)
+   to where the robot really starts, and `ALLOWED` to the colors this autonomous may collect. The robot
+   faces straight away from the wall and does not move to look around: it plans from the balls the camera
+   can see from there.
+2. Place the balls inside the camera's view. Put the robot's back flush against the wall at the marked
+   spot. Press Init: telemetry shows the computed start pose and the ball map filling while it waits. Wait
+   until every ball you expect is listed.
+3. Press Play. It watches for half a second more, plans once, drives, and stops after the last pickup with
+   the count in telemetry. Leaving the wall, it holds its heading until the footprint is clear, then
+   rotates toward the first ball.
 
 ## Pass criteria for "ready"
 
 - Test 1 range within 2 in at 12 to 60 in, all three colors.
-- Test 3 Tests pass and `TUNED = true`. Odometry drift matters now: after Test 3's line test, push the
-  robot back into the corner and check that the pose telemetry still reads the corner within an inch.
+- Test 3 Tests pass and `TUNED = true`. Odometry drift matters now: after Test 3's line test, put the
+  robot back against the wall at the start mark and check that the pose telemetry still reads the start
+  pose within an inch.
 - Test 6 collects four of four on three consecutive runs from different start spots.

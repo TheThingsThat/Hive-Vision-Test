@@ -29,14 +29,14 @@ import java.util.EnumSet;
  *   <li>B: cancel following</li>
  *   <li>X: clear the ball map and plan</li>
  *   <li>D-pad left / up / right: toggle yellow / red / blue as allowed targets</li>
- *   <li>Start: reset pose to {@code START_POSE} (push the robot into the start corner first)</li>
+ *   <li>Start: reset pose to {@code START_POSE} (put the robot's back flush against the middle of the red wall first)</li>
  * </ul>
- * Localization is odometry only, seeded from the corner pose; no AprilTags needed.
+ * Localization is odometry only, seeded from the wall pose; no AprilTags needed.
  */
 @TeleOp(name = "Limelight: Collect Four Test", group = "Limelight")
 public class LimelightCollectFourTest extends OpMode {
-    /** Robot pushed into the origin corner (red side, right when standing at the red wall), facing the blue wall. */
-    public static Pose START_POSE = StartPoses.cornerDegrees(StartPoses.Corner.NEAR_RIGHT, 0);
+    /** Robot centered on the red alliance wall, back flush against it, facing the blue wall. */
+    public static Pose START_POSE = StartPoses.wallCenter(StartPoses.Wall.RED);
 
     private HiveLimelight limelight;
     private Follower follower;
