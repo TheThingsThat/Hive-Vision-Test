@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import com.pedropathing.api.Paths;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.pedropathing.math.Velocity;
@@ -8,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.pedro.Constants;
+import org.firstinspires.ftc.teamcode.pedro.StartPoses;
 import org.firstinspires.ftc.teamcode.planning.BallMap;
 import org.firstinspires.ftc.teamcode.planning.FieldBall;
 import org.firstinspires.ftc.teamcode.planning.PickupPlan;
@@ -20,48 +22,62 @@ import org.firstinspires.ftc.teamcode.vision.LimelightConstants;
 import java.util.EnumSet;
 
 /**
- * Autonomous: look for balls, pick the best four, drive over them.
+ * Autonomous: start pressed into a known corner, look for balls, pick the best four, drive over them.
  * <p>
- * Balls seen while waiting for start are already in the map. After start the robot optionally rotates in
- * place for {@code SCAN_SECONDS} to see more of the field, then plans once and follows the plan.
+ * Localization is odometry only, seeded from the exact corner pose; no AprilTags are needed. Balls seen
+ * while waiting for start are already in the map. After start the robot drives diagonally out of the
+ * corner (a rotating square would hit both walls), spins for {@code SCAN_SECONDS} to see more of the
+ * field, plans once and follows the plan.
  */
 @Autonomous(name = "Collect Four (Limelight + Pedro)", group = "Limelight")
 public class CollectFourAuto extends OpMode {
-    /** Where the robot starts, Pedro coordinates. */
-    public static Pose START_POSE = new Pose(72, 72, 0);
-    public static double SCAN_SECONDS = 2.0;
+    /** Which corner the robot is pushed into, and which way it faces (0 = toward the blue wall). */
+    public static StartPoses.Corner START_CORNER = StartPoses.Corner.NEAR_RIGHT;
+    public static double START_HEADING_DEG = 0;
+
+    /** How far to move diagonally toward the field center before spinning. 0 skips the move and the spin. */
+    public static double SCAN_CLEARANCE_IN = 14.0;
+    public static double SCAN_SECONDS = 2.5;
     public static double SCAN_TURN_POWER = 0.25;
+
     /** Which colors this autonomous is allowed to collect. */
     public static EnumSet<BallColor> ALLOWED = EnumSet.allOf(BallColor.class);
 
-    private enum State { SCAN, PLAN, COLLECT, DONE }
+    private enum State { LEAVE_CORNER, SCAN, PLAN, COLLECT, DONE }
 
     private HiveLimelight limelight;
     private Follower follower;
+    private Pose startPose;
+    private Pose scanPose;
     private final BallMap map = new BallMap();
     private final PickupPlanner planner = new PickupPlanner();
     private final ElapsedTime timer = new ElapsedTime();
 
-    private State state = State.SCAN;
+    private State state = State.LEAVE_CORNER;
     private PickupPlan plan;
     private int nextPickup;
     private String status = "";
 
     @Override
     public void init() {
+        startPose = StartPoses.cornerDegrees(START_CORNER, START_HEADING_DEG);
+        scanPose = StartPoses.towardCenter(startPose, SCAN_CLEARANCE_IN);
+
         limelight = new HiveLimelight(hardwareMap);
         limelight.start(LimelightConstants.PIPELINE_BALL_DETECTOR);
         PlannerConstants.MAX_VELOCITY_IN_S = Constants.foresightConfig.maxAchievableForwardVelocity.get();
-        follower = Constants.createWithVision(hardwareMap, limelight);
-        follower.setPose(START_POSE);
+        follower = Constants.create(hardwareMap);
+        follower.setPose(startPose);
         telemetry.setMsTransmissionInterval(50);
     }
 
     @Override
     public void init_loop() {
-        // Robot is stationary at START_POSE, so anything seen now can be mapped already.
+        // Robot is stationary at the corner, so anything seen now can be mapped already.
         limelight.update();
-        map.ingest(limelight, START_POSE);
+        map.ingest(limelight, startPose);
+        telemetry.addData("Start", "%s facing %.0f deg -> (%.1f, %.1f)", START_CORNER, START_HEADING_DEG,
+                startPose.x(), startPose.y());
         telemetry.addData("Ball map", map.summary());
         for (FieldBall b : map.all()) telemetry.addData("  ball", b.toString());
         telemetry.update();
@@ -70,12 +86,24 @@ public class CollectFourAuto extends OpMode {
     @Override
     public void start() {
         timer.reset();
-        state = SCAN_SECONDS > 0 ? State.SCAN : State.PLAN;
+        if (SCAN_CLEARANCE_IN > 0) {
+            follower.follow(Paths.line(startPose, scanPose).constant(startPose.heading()));
+            state = State.LEAVE_CORNER;
+        } else {
+            state = State.PLAN;
+        }
     }
 
     @Override
     public void loop() {
         switch (state) {
+            case LEAVE_CORNER:
+                if (!follower.following()) {
+                    timer.reset();
+                    state = SCAN_SECONDS > 0 ? State.SCAN : State.PLAN;
+                }
+                break;
+
             case SCAN:
                 follower.manual(0, 0, SCAN_TURN_POWER);
                 if (timer.seconds() >= SCAN_SECONDS) {
@@ -111,6 +139,7 @@ public class CollectFourAuto extends OpMode {
         }
 
         follower.update();
+        limelight.update();
         map.ingest(limelight, follower.pose());
 
         telemetry.addData("State", "%s %s", state, status);

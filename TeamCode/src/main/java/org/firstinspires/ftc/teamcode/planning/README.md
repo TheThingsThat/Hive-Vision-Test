@@ -69,12 +69,18 @@ crowded (nearest balls are kept).
 
 ## Running it
 
-- **Limelight: Collect Four Test** (TeleOp): drive around so the map fills, press A to plan (the plan is
-  printed in telemetry with order, positions, approach angles and estimated time), Y to follow, B to
-  cancel. D-pad toggles which colors are allowed.
-- **Collect Four (Limelight + Pedro)** (Autonomous): balls visible during init are mapped, the robot
-  optionally spins for `SCAN_SECONDS` to see more, plans once, and drives the path. Set `ALLOWED` to
-  restrict colors and `START_POSE` to where the robot actually starts.
+- **Limelight: Collect Four Test** (TeleOp): push the robot into the origin corner and press Start to set
+  the pose, drive around so the map fills, press A to plan (the plan is printed in telemetry with order,
+  positions, approach angles and estimated time), Y to follow, B to cancel. D-pad toggles which colors are
+  allowed.
+- **Collect Four (Limelight + Pedro)** (Autonomous): the robot starts pushed into a field corner
+  (`START_CORNER`, `START_HEADING_DEG`; `StartPoses` computes the exact center from the robot size), so
+  odometry is seeded exactly and no AprilTags are needed. Balls visible during init are mapped, the robot
+  drives `SCAN_CLEARANCE_IN` out of the corner, spins for `SCAN_SECONDS`, plans once, and drives the path.
+  Set `ALLOWED` to restrict colors.
+
+Both OpModes use `Constants.create` (odometry only). AprilTag fusion (`Constants.createWithVision`) remains
+available for longer runs where drift matters; see the vision README.
 
 ## What to tune first
 

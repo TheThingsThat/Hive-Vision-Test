@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.pedro.Constants;
+import org.firstinspires.ftc.teamcode.pedro.StartPoses;
 import org.firstinspires.ftc.teamcode.planning.BallMap;
 import org.firstinspires.ftc.teamcode.planning.FieldBall;
 import org.firstinspires.ftc.teamcode.planning.PickupPlan;
@@ -28,12 +29,14 @@ import java.util.EnumSet;
  *   <li>B: cancel following</li>
  *   <li>X: clear the ball map and plan</li>
  *   <li>D-pad left / up / right: toggle yellow / red / blue as allowed targets</li>
- *   <li>Start: reset pose to {@code START_POSE}</li>
+ *   <li>Start: reset pose to {@code START_POSE} (push the robot into the start corner first)</li>
  * </ul>
+ * Localization is odometry only, seeded from the corner pose; no AprilTags needed.
  */
 @TeleOp(name = "Limelight: Collect Four Test", group = "Limelight")
 public class LimelightCollectFourTest extends OpMode {
-    public static Pose START_POSE = new Pose(72, 72, 0);
+    /** Robot pushed into the origin corner (red side, right when standing at the red wall), facing the blue wall. */
+    public static Pose START_POSE = StartPoses.cornerDegrees(StartPoses.Corner.NEAR_RIGHT, 0);
 
     private HiveLimelight limelight;
     private Follower follower;
@@ -55,7 +58,7 @@ public class LimelightCollectFourTest extends OpMode {
         limelight.start(LimelightConstants.PIPELINE_BALL_DETECTOR);
         PlannerConstants.MAX_VELOCITY_IN_S = Constants.foresightConfig.maxAchievableForwardVelocity.get();
         try {
-            follower = Constants.createWithVision(hardwareMap, limelight);
+            follower = Constants.create(hardwareMap);
             follower.setPose(START_POSE);
         } catch (Exception e) {
             initError = e.getClass().getSimpleName() + ": " + e.getMessage();
@@ -79,6 +82,7 @@ public class LimelightCollectFourTest extends OpMode {
             follower.manual(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
         }
         follower.update();
+        limelight.update();
         map.ingest(limelight, follower.pose());
 
         if (following) trackPickups();

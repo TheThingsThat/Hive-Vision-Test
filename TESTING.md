@@ -16,10 +16,11 @@ facing the blue wall is (72, 72, 0).
 2. **Model files.** Clone `https://github.com/sidhuharjas/Hive-Vision`. You need
    `yolo/weights/best_limelight3a_ssd_mobilenetv2_300x300.tflite` and `yolo/weights/labels.txt`.
 3. **Limelight.** Plug the Limelight into the laptop with USB-C and open `http://limelight.local:5801`.
-   Pipeline 0: type Neural Detector, upload the model and labels, confidence 0.40. Pipeline 1: type
-   AprilTag, full 3D on, the season's field map loaded, camera pose entered (LL Forward / Right / Up in
-   meters, roll / pitch / yaw in degrees, measured from the robot's tracking center to the lens). Set the
-   team number in Settings. Download both pipelines and keep the files. Skip what is already done.
+   Pipeline 0: type Neural Detector, upload the model and labels, confidence 0.40. Set the team number in
+   Settings. Download the pipeline and keep the file. Skip what is already done.
+   *Optional:* Pipeline 1, type AprilTag, full 3D on, the season's field map loaded, camera pose entered
+   (LL Forward / Right / Up in meters, roll / pitch / yaw in degrees). Only needed for Tests 2 and 5; the
+   collect-four OpModes start from a fixed corner pose and do not use tags.
 4. **Wiring.** Limelight USB-C to the Control Hub's USB 3.0 port. Four drive motors. goBILDA Pinpoint on
    an I2C port with both odometry pods.
 5. **Robot configuration** (Driver Station > Configure Robot > scan): rename the "Ethernet Device" to
@@ -50,7 +51,8 @@ facing the blue wall is (72, 72, 0).
    write the value you like into `MIN_CONFIDENCE`. Y saves a snapshot you can view in the web UI.
 6. Pass when all three colors are found at 36 in with confidence above 0.5 and stable range numbers.
 
-**Test 2: Limelight: AprilTag Test.** Needs pipeline 1 and at least one AprilTag from the field map.
+**Test 2 (optional): Limelight: AprilTag Test.** Only if you set up pipeline 1. Needs at least one
+AprilTag from the field map.
 
 1. Place the robot at a known spot, for example field center facing the blue wall.
 2. Init. Read the MT1 lines: FTC inches should be near (0, 0, 90 deg) and Pedro near (72, 72, 0 deg).
@@ -86,7 +88,8 @@ Clear the area, keep a hand on the Driver Station stop, and start every test at 
 3. If it turns away from the ball, the drive motor directions in `Constants` are wrong: fix them there, do
    not flip the gain. If it oscillates, halve `TURN_KP`. If it stops short or long, adjust `DRIVE_KP`.
 
-**Test 5: Limelight: Pedro Fusion Test.** Motors, Pinpoint, AprilTags in view.
+**Test 5 (optional): Limelight: Pedro Fusion Test.** Only if you set up pipeline 1. Motors, Pinpoint,
+AprilTags in view.
 
 1. Put the robot at (72, 72, 0), press Start to reset the pose if needed.
 2. Drive around slowly with tags visible. "Fused - odometry" starts near zero and grows as odometry
@@ -94,11 +97,15 @@ Clear the area, keep a hand on the Driver Station stop, and start every test at 
 3. Press B to disable fusion and watch the odometry-only pose drift on its own. Press A to snap to the
    last tag estimate. Pass when the fused pose lands within 2 in of a taped position after a lap.
 
-**Test 6: Limelight: Collect Four Test.** This is the full stack.
+**Test 6: Limelight: Collect Four Test.** This is the full stack. Localization is odometry only, seeded
+from the corner, so the start position must be exact.
 
 1. Place five or six balls in the open, at least 18 in from any wall and 12 in apart. Tape-measure each
    one's Pedro (x, y) and write them down.
-2. Put the robot at (72, 72, 0) facing the blue wall, press Start to reset the pose.
+2. Push the robot squarely into the origin corner (red side, right when you stand at the red wall) with
+   its back against the red wall and its right side against the side wall, facing the blue wall. Init, then
+   press Start on the gamepad to set the pose to that corner. Telemetry should read (8.5, 8.5, 0) for a
+   17 in robot. Then drive it out of the corner before turning: a rotating square hits both walls.
 3. Drive slowly so every ball is seen for a second or more. Watch the ball map in telemetry: each ball
    needs two sightings. Positions should match your tape within 3 in. A ball listed twice means
    `MERGE_DISTANCE_IN` is too small; positions all shifted the same way means a camera constant is off.
@@ -119,13 +126,18 @@ Clear the area, keep a hand on the Driver Station stop, and start every test at 
 
 **Test 7: Collect Four (Autonomous).**
 
-1. In `CollectFourAuto` set `START_POSE` to the real starting position and `ALLOWED` to the colors this
-   autonomous may collect. `SCAN_SECONDS` is how long it spins to look around (2 s at 0.25 power).
-2. Place the balls, place the robot, press Init. The ball map fills while waiting; telemetry lists it.
-3. Press Play. It scans, plans once, drives, and stops after the last pickup with the count in telemetry.
+1. In `CollectFourAuto` set `START_CORNER` and `START_HEADING_DEG` to where the robot really starts, and
+   `ALLOWED` to the colors this autonomous may collect. `SCAN_CLEARANCE_IN` is how far it drives out of
+   the corner before spinning (default 14 in, diagonally toward the field center); `SCAN_SECONDS` is how
+   long it spins (2.5 s at 0.25 power).
+2. Place the balls. Push the robot squarely into the corner. Press Init: telemetry shows the computed
+   start pose and the ball map filling while it waits.
+3. Press Play. It leaves the corner, spins, plans once, drives, and stops after the last pickup with the
+   count in telemetry.
 
 ## Pass criteria for "ready"
 
 - Test 1 range within 2 in at 12 to 60 in, all three colors.
-- Test 3 Tests pass and `TUNED = true`.
+- Test 3 Tests pass and `TUNED = true`. Odometry drift matters now: after Test 3's line test, push the
+  robot back into the corner and check that the pose telemetry still reads the corner within an inch.
 - Test 6 collects four of four on three consecutive runs from different start spots.
