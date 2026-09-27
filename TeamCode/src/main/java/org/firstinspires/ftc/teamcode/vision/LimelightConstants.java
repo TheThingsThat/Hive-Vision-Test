@@ -1,11 +1,14 @@
 package org.firstinspires.ftc.teamcode.vision;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 /**
  * Every tunable number for the Limelight 3A integration lives here.
  * <p>
  * Fields are {@code public static} and deliberately not {@code final} so they can be edited from a
  * dashboard or nudged from a test OpMode without recompiling.
  */
+@Configurable
 public final class LimelightConstants {
     private LimelightConstants() {}
 
@@ -44,19 +47,19 @@ public final class LimelightConstants {
     // Robot frame: +x forward, +y left, +z up. Inches and degrees. Measure these on the real robot.
 
     /** Lens position ahead of the robot's tracking center. */
-    public static double CAMERA_FORWARD_OFFSET_IN = 6.0;
+    public static double CAMERA_FORWARD_OFFSET_IN = 2.5;
 
     /** Lens position to the LEFT of the robot's tracking center (negative = right). */
-    public static double CAMERA_LATERAL_OFFSET_IN = 0.0;
+    public static double CAMERA_LATERAL_OFFSET_IN = -1.0;
 
     /** Lens height above the floor. */
-    public static double CAMERA_HEIGHT_IN = 8.0;
+    public static double CAMERA_HEIGHT_IN = 9.7;
 
     /** Positive = lens tilted DOWN toward the floor. 0 = level with the floor. */
     public static double CAMERA_PITCH_DOWN_DEG = 20.0;
 
     /** Diameter of a game ball. The camera ray is intersected with the plane through the ball's center. */
-    public static double BALL_DIAMETER_IN = 5.0;
+    public static double BALL_DIAMETER_IN = 3.0;
 
     // ------------------------------------------------------------------ AprilTag localization
 

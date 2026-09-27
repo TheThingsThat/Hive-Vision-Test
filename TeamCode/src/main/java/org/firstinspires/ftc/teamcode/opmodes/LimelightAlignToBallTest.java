@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.drivetrain.Drivetrain;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -21,6 +22,7 @@ import org.firstinspires.ftc.teamcode.vision.LimelightConstants;
  * Pedro's {@code DrivePowers} convention is (forward, left, counter-clockwise), so a ball to the right
  * (positive tx) needs a negative turn power.
  */
+@Configurable
 @TeleOp(name = "Limelight: Align To Ball Test", group = "Limelight")
 public class LimelightAlignToBallTest extends OpMode {
     public static double TURN_KP = 0.02;       // power per degree of tx

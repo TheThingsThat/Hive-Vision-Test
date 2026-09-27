@@ -45,8 +45,9 @@ facing the blue wall is (72, 72, 0).
 2. Init the OpMode. Telemetry shows each detection with confidence, tx, ty, area, dist and bearing.
 3. Expect dist within 2 in of the tape and bearing near 0. If dist is off, adjust
    `CAMERA_PITCH_DOWN_DEG` first (it is the most sensitive), then `CAMERA_HEIGHT_IN`.
-4. Repeat at 12, 36 and 60 in. The error should stay roughly proportional. Then move the ball 12 in to the
-   left at 36 in: bearing should be about +18 deg (left is positive).
+4. Repeat at 12, 36 and 60 in. The error should stay roughly proportional. For the bearing check, place the
+   ball center about 12 in forward and 4 in left of the robot's tracking center. Telemetry should report a
+   distance of about 12.6 in and a bearing of about +18.4 deg (left is positive).
 5. Watch the streak: "CONFIRMED" appears after 3 consecutive frames. A and B move the confidence threshold;
    write the value you like into `MIN_CONFIDENCE`. Y saves a snapshot you can view in the web UI.
 6. Pass when all three colors are found at 36 in with confidence above 0.5 and stable range numbers.

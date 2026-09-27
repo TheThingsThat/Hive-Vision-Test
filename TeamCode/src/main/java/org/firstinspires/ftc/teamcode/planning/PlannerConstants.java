@@ -1,17 +1,20 @@
 package org.firstinspires.ftc.teamcode.planning;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 /**
  * Tunables for ball selection and pickup-path planning. Public static (not final) so they can be
  * edited from a dashboard or test OpMode.
  */
+@Configurable
 public final class PlannerConstants {
     private PlannerConstants() {}
 
     // ------------------------------------------------------------------ robot & intake geometry
 
     /** Robot footprint, inches. Used for wall clearance. */
-    public static double ROBOT_LENGTH_IN = 17.0;
-    public static double ROBOT_WIDTH_IN = 17.0;
+    public static double ROBOT_LENGTH_IN = 17.5;
+    public static double ROBOT_WIDTH_IN = 17.5;
 
     /**
      * Distance from the robot's tracking center to the point where a ball is captured, measured along the
